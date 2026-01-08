@@ -1,5 +1,6 @@
-
 import React, { useState, useEffect, useRef } from 'react';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import Layout from './components/Layout';
 import ChoiceButton from './components/ChoiceButton';
 import ReportCard from './components/ReportCard';
@@ -9,7 +10,6 @@ import { getAIAnalysis } from './services/geminiService';
 import { Send, LogOut, ChevronRight, BarChart3, Award, Download, RefreshCcw } from 'lucide-react';
 
 const App: React.FC = () => {
-  // 增加 sessionKey 用于强制重置组件生命周期
   const [sessionKey, setSessionKey] = useState<number>(0);
   const [state, setState] = useState<AppState>({
     user: null,
@@ -24,13 +24,11 @@ const App: React.FC = () => {
 
   const nodeStartTimeRef = useRef<number>(Date.now());
 
-  // 每次切换屏幕或故事节点时，自动滚动到顶部
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [state.currentScreen, state.currentNodeId]);
 
   const navigateTo = (screen: AppState['currentScreen'], nodeId?: string) => {
-    // 记录上个节点的停留时间
     const duration = Date.now() - nodeStartTimeRef.current;
     if (state.currentScreen === 'story') {
       setState(prev => ({
@@ -39,7 +37,6 @@ const App: React.FC = () => {
       }));
     }
 
-    // 重置当前节点计时起点
     nodeStartTimeRef.current = Date.now();
     setState(prev => ({
       ...prev,
@@ -94,17 +91,12 @@ const App: React.FC = () => {
     setState(prev => ({ ...prev, feedback }));
     navigateTo('report');
 
-    // 触发 AI 分析
     const analysis = await getAIAnalysis(state.choices, state.nodeTimings, state.user?.username || '读者');
     setState(prev => ({ ...prev, aiAnalysis: analysis }));
   };
 
-  /**
-   * 核心修复：彻底重置故事状态，返回欢迎页，保留用户信息
-   */
   const restartJourney = () => {
     if (window.confirm("确定要重置当前故事记录并开启新的旅程吗？")) {
-      // 强制更新 sessionKey 销毁旧组件
       setSessionKey(prev => prev + 1);
       nodeStartTimeRef.current = Date.now();
       setState(prev => ({
@@ -120,9 +112,6 @@ const App: React.FC = () => {
     }
   };
 
-  /**
-   * 彻底重置并返回登录页
-   */
   const fullReset = () => {
     if (window.confirm("确定要退出当前账号并返回首页吗？")) {
       setSessionKey(prev => prev + 1);
@@ -143,11 +132,8 @@ const App: React.FC = () => {
     const reportElement = document.getElementById('report-capture');
     if (!reportElement) return;
 
-    // @ts-ignore
     html2canvas(reportElement, { scale: 2, useCORS: true, backgroundColor: '#f7f5f0' }).then(canvas => {
       const imgData = canvas.toDataURL('image/png');
-      // @ts-ignore
-      const { jsPDF } = window.jspdf;
       const pdf = new jsPDF('p', 'mm', 'a4');
       const imgProps = pdf.getImageProperties(imgData);
       const pdfWidth = pdf.internal.pageSize.getWidth();
