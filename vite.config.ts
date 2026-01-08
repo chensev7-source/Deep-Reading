@@ -5,10 +5,11 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   define: {
-    // 确保代码中的 process.env.API_KEY 能在构建时被正确替换
-    'process.env': process.env
+    // 注入 process.env 变量以符合 @google/genai SDK 的硬性要求
+    'process.env.API_KEY': JSON.stringify(process.env.API_KEY)
   },
   build: {
     outDir: 'dist',
+    emptyOutDir: true
   }
 });
