@@ -9,6 +9,8 @@ import { getAIAnalysis } from './services/geminiService';
 import { Send, LogOut, ChevronRight, BarChart3, Award, Download, RefreshCcw } from 'lucide-react';
 
 const App: React.FC = () => {
+  // 增加 sessionKey 用于强制重置组件生命周期
+  const [sessionKey, setSessionKey] = useState<number>(0);
   const [state, setState] = useState<AppState>({
     user: null,
     currentScreen: 'login',
@@ -22,7 +24,7 @@ const App: React.FC = () => {
 
   const nodeStartTimeRef = useRef<number>(Date.now());
 
-  // 每次切换屏幕或故事节点时，自动滚动到顶部，确保体验流畅
+  // 每次切换屏幕或故事节点时，自动滚动到顶部
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [state.currentScreen, state.currentNodeId]);
@@ -98,10 +100,12 @@ const App: React.FC = () => {
   };
 
   /**
-   * 修复后的重启逻辑：彻底清空故事状态，返回欢迎页，保留登录信息
+   * 核心修复：彻底重置故事状态，返回欢迎页，保留用户信息
    */
   const restartJourney = () => {
     if (window.confirm("确定要重置当前故事记录并开启新的旅程吗？")) {
+      // 强制更新 sessionKey 销毁旧组件
+      setSessionKey(prev => prev + 1);
       nodeStartTimeRef.current = Date.now();
       setState(prev => ({
         ...prev,
@@ -117,10 +121,11 @@ const App: React.FC = () => {
   };
 
   /**
-   * 彻底登出并返回登录页
+   * 彻底重置并返回登录页
    */
   const fullReset = () => {
-    if (window.confirm("确定要退出当前账号并返回首页吗？\n(这将会清除本次的所有阅读记录)")) {
+    if (window.confirm("确定要退出当前账号并返回首页吗？")) {
+      setSessionKey(prev => prev + 1);
       setState({
         user: null,
         currentScreen: 'login',
@@ -138,28 +143,28 @@ const App: React.FC = () => {
     const reportElement = document.getElementById('report-capture');
     if (!reportElement) return;
 
-    // 使用全局脚本中的 html2canvas 和 jspdf
     // @ts-ignore
-    html2canvas(reportElement, { scale: 2, useCORS: true }).then(canvas => {
+    html2canvas(reportElement, { scale: 2, useCORS: true, backgroundColor: '#f7f5f0' }).then(canvas => {
       const imgData = canvas.toDataURL('image/png');
       // @ts-ignore
-      const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p', 'mm', 'a4');
       const imgProps = pdf.getImageProperties(imgData);
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`拾光旧书_阅读报告_${state.user?.username || '匿名'}.pdf`);
+      pdf.save(`拾光旧书_阅读报告_${state.user?.username || '读者'}.pdf`);
     });
   };
 
   return (
-    <Layout>
+    <Layout key={sessionKey}>
       {state.currentScreen === 'login' && (
         <div id="login-page" className="flex flex-col items-center justify-center py-8 animate-in fade-in duration-700">
           <div className="text-6xl mb-6">📖</div>
           <h1 className="serif-font text-4xl font-bold text-slate-800 mb-2">拾光旧书店</h1>
-          <p className="serif-font text-slate-500 italic mb-8">一段关于寻找、迷失与救赎的互动旅程</p>
-          <form onSubmit={handleLogin} className="w-full max-w-xs space-y-4">
+          <p className="serif-font text-slate-500 italic mb-8 text-center px-4">一段关于寻找、迷失与救赎的互动旅程</p>
+          <form onSubmit={handleLogin} className="w-full max-w-xs space-y-4 px-4">
             <input name="username" type="text" placeholder="参与者署名" required className="w-full p-4 border rounded-lg outline-none focus:ring-2 focus:ring-amber-500 transition-all shadow-sm" />
             <input type="password" placeholder="通行密码 (演示期间可为空)" className="w-full p-4 border rounded-lg outline-none shadow-sm" />
             <button type="submit" className="w-full bg-slate-800 text-white p-4 rounded-lg font-bold hover:bg-slate-700 shadow-md transition-all active:scale-95">推开店门</button>
@@ -169,8 +174,8 @@ const App: React.FC = () => {
       )}
 
       {state.currentScreen === 'register' && (
-        <div id="register-page" className="flex flex-col items-center justify-center py-8 animate-in fade-in">
-          <h1 className="serif-font text-3xl font-bold mb-8">建立新的身份</h1>
+        <div id="register-page" className="flex flex-col items-center justify-center py-8 animate-in fade-in px-4">
+          <h1 className="serif-font text-3xl font-bold mb-8 text-center">建立新的身份</h1>
           <form onSubmit={handleRegister} className="w-full max-w-xs space-y-4">
             <input type="text" placeholder="设置用户名" required className="w-full p-4 border rounded-lg outline-none" />
             <input type="password" placeholder="设置密码" required className="w-full p-4 border rounded-lg outline-none" />
@@ -181,11 +186,11 @@ const App: React.FC = () => {
       )}
 
       {state.currentScreen === 'welcome' && (
-        <div id="welcome-page" className="animate-in fade-in duration-1000 space-y-8 flex flex-col justify-center min-h-[400px]">
-          <h2 className="serif-font text-3xl font-bold text-center border-b pb-6 border-dashed">序章：关于选择</h2>
+        <div id="welcome-page" className="animate-in fade-in duration-1000 space-y-8 flex flex-col justify-center min-h-[400px] px-2 md:px-0">
+          <h2 className="serif-font text-3xl font-bold text-center border-b pb-6 border-dashed text-slate-800">序章：关于选择</h2>
           <div className="serif-font text-xl leading-relaxed text-slate-700 space-y-6">
             <p>你好，<span className="text-amber-700 font-bold border-b-2 border-amber-200">{state.user?.username}</span>。</p>
-            <p>欢迎来到这家名为“拾光”的旧书店。在这里，你将不再是一个传递纸张的信使，而是故事的主角。</p>
+            <p>欢迎来到这家名为“拾光”的旧书店。在这里，你将不再是一个旁观者，而是故事的主角。</p>
             <p>你即将经历一个关于承诺、欲望、真相与温情的故事。请注意，你的每一次选择都不仅仅是点击一个按钮，它们是通往不同平行宇宙的钥匙。</p>
             <p className="text-right italic text-slate-400 mt-12">—— 命运，正握在你的指尖。</p>
           </div>
@@ -216,7 +221,7 @@ const App: React.FC = () => {
                 onClick={() => navigateTo('feedback')}
                 className="bg-amber-700 text-white p-5 rounded-lg font-bold hover:bg-amber-800 shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95"
               >
-                故事已写就：进入灵魂反馈 <Send size={18} />
+                故事已写就：进入灵魂回响 <Send size={18} />
               </button>
             )}
           </div>
@@ -224,27 +229,27 @@ const App: React.FC = () => {
       )}
 
       {state.currentScreen === 'feedback' && (
-        <div id="feedback-page" className="animate-in fade-in duration-500">
+        <div id="feedback-page" className="animate-in fade-in duration-500 px-2 md:px-0">
           <h2 className="serif-font text-2xl font-bold mb-8 text-center border-b pb-4 border-dashed">实验反馈：心灵的震颤</h2>
           <form onSubmit={submitFeedback} className="space-y-10">
             <div className="space-y-4">
               <label className="block font-bold text-slate-700">1. 代理感：你认为自己的选择改变了结局吗？</label>
-              <div className="flex justify-between bg-white p-5 rounded-xl border border-slate-100 shadow-sm">
+              <div className="flex justify-between bg-white p-5 rounded-xl border border-slate-100 shadow-sm overflow-x-auto gap-2">
                 {[1, 2, 3, 4, 5].map(v => (
                   <label key={v} className="cursor-pointer group flex flex-col items-center">
                     <input type="radio" name="agency" value={v} required className="peer hidden" />
-                    <div className="w-12 h-12 flex items-center justify-center rounded-full border-2 border-slate-100 peer-checked:border-amber-500 peer-checked:bg-amber-50 peer-checked:text-amber-600 transition-all font-bold text-slate-300">{v}</div>
+                    <div className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-full border-2 border-slate-100 peer-checked:border-amber-500 peer-checked:bg-amber-50 peer-checked:text-amber-600 transition-all font-bold text-slate-300">{v}</div>
                   </label>
                 ))}
               </div>
             </div>
             <div className="space-y-4">
               <label className="block font-bold text-slate-700">2. 情感共鸣满意度：</label>
-              <div className="flex justify-between bg-white p-5 rounded-xl border border-slate-100 shadow-sm">
+              <div className="flex justify-between bg-white p-5 rounded-xl border border-slate-100 shadow-sm overflow-x-auto gap-2">
                 {[1, 2, 3, 4, 5].map(v => (
                   <label key={v} className="cursor-pointer group flex flex-col items-center">
                     <input type="radio" name="emotion" value={v} required className="peer hidden" />
-                    <div className="w-12 h-12 flex items-center justify-center rounded-full border-2 border-slate-100 peer-checked:border-amber-500 peer-checked:bg-amber-50 peer-checked:text-amber-600 transition-all font-bold text-slate-300">{v}</div>
+                    <div className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-full border-2 border-slate-100 peer-checked:border-amber-500 peer-checked:bg-amber-50 peer-checked:text-amber-600 transition-all font-bold text-slate-300">{v}</div>
                   </label>
                 ))}
               </div>
@@ -255,7 +260,7 @@ const App: React.FC = () => {
             </div>
             <div className="flex justify-center pt-4">
               <button type="submit" className="bg-amber-700 text-white px-12 py-4 rounded-lg font-bold hover:bg-amber-800 flex items-center gap-2 group shadow-xl active:scale-95 transition-all">
-                提交反馈并生成报告 <Send size={18} />
+                生成灵魂画像 <Send size={18} />
               </button>
             </div>
           </form>
@@ -267,14 +272,18 @@ const App: React.FC = () => {
           <div id="report-capture">
             <ReportCard state={state} />
           </div>
-          <div className="flex flex-wrap gap-4 justify-center pt-4 no-print pb-10">
+          <div className="flex flex-wrap gap-4 justify-center pt-4 no-print pb-10 px-4">
             <button onClick={downloadPDF} className="bg-white border-2 border-slate-200 px-6 py-3 rounded-lg hover:border-amber-500 hover:text-amber-700 transition-all flex items-center gap-2 font-bold shadow-sm active:scale-95">
-              <Download size={18} /> 打印 PDF 报告
+              <Download size={18} /> 下载 PDF
             </button>
             <button onClick={() => navigateTo('dashboard')} className="bg-slate-800 text-white px-8 py-3 rounded-lg hover:bg-slate-900 transition-all flex items-center gap-2 font-bold shadow-lg active:scale-95">
               <BarChart3 size={18} /> 实验看板
             </button>
-            <button id="restartBtn" onClick={restartJourney} className="bg-white border-2 border-slate-200 px-6 py-3 rounded-lg hover:border-amber-500 hover:text-amber-700 transition-all flex items-center gap-2 font-bold text-slate-600 shadow-sm active:scale-95">
+            <button 
+              id="restartBtn" 
+              onClick={restartJourney} 
+              className="bg-white border-2 border-slate-200 px-6 py-3 rounded-lg hover:border-amber-500 hover:text-amber-700 transition-all flex items-center gap-2 font-bold text-slate-600 shadow-sm active:scale-95"
+            >
               <RefreshCcw size={18} /> 开启新的旅程
             </button>
           </div>
@@ -282,8 +291,8 @@ const App: React.FC = () => {
       )}
 
       {state.currentScreen === 'dashboard' && (
-        <div id="visual-page" className="animate-in fade-in duration-500 space-y-10 h-full overflow-y-auto no-scrollbar pb-10">
-          <h2 className="serif-font text-2xl font-bold text-center border-b pb-4 border-dashed flex items-center justify-center gap-2">
+        <div id="visual-page" className="animate-in fade-in duration-500 space-y-10 h-full overflow-y-auto no-scrollbar pb-10 px-4">
+          <h2 className="serif-font text-2xl font-bold text-center border-b pb-4 border-dashed flex items-center justify-center gap-2 text-slate-800">
             <BarChart3 className="text-amber-600" /> 实验数据总览
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

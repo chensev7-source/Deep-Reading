@@ -1,20 +1,37 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
 
-# Run and deploy your AI Studio app
+# 📖 拾光旧书 | 交互式叙事体验实验 (Time-Bound Old Books)
 
-This contains everything you need to run your app locally.
+本项目是一个融合了心理学、叙事学与 AI 智能分析的交互式 Web 体验应用。读者通过在一个虚构的旧书店中进行选择，触发不同的情感分支（救赎、沉沦、悬疑、温情），最终生成一份深度个性化的心理画像报告。
 
-View your app in AI Studio: https://ai.studio/apps/drive/1u0ojmCRnBtTyl3OAwDHDQLYLWs5xTf6P
+## 🌟 核心功能
+- **沉浸式互动叙事**：包含 29 个故事节点，4 条完整的情感分支路径。
+- **行为心流监控**：实时分析读者的选择逻辑与在关键情节的停留时间（沉思时长）。
+- **AI 灵魂回响**：利用 Gemini 3 Pro 深度学习模型，根据读者的全流程行为生成极具文学美感的灵魂报告。
+- **可视化阅读看板**：展示叙事掌控力、心流共感时长等实验数据。
+- **一键报告导出**：支持将生成的个性化画像导出为高清 PDF 文档。
 
-## Run Locally
+## 🛠️ 环境准备
+1. **Node.js**：建议版本 18.0 或更高。
+2. **API KEY**：需在环境变量中配置 `API_KEY` 以启用 AI 分析功能。
+3. **浏览器**：支持现代 ESM 模块的浏览器（Chrome, Edge, Safari, Firefox）。
 
-**Prerequisites:**  Node.js
+## 🚀 运行说明
+本项目采用现代 ESM 架构，无需复杂的打包过程，可直接启动：
 
+1. **本地预览**：
+   ```bash
+   # 若您使用简单的 http-server
+   npx http-server .
+   ```
+2. **在线部署**：
+   可直接部署于 GitHub Pages、Vercel 或 Netlify，确保根目录包含 `index.html` 即可。
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## 📁 项目结构
+- `App.tsx`: 应用主逻辑与状态管理。
+- `constants.tsx`: 29 个故事节点的文本与逻辑配置。
+- `services/geminiService.ts`: AI 情感画像生成引擎。
+- `components/`: UI 布局与功能组件（Layout, ChoiceButton, ReportCard）。
+- `types.ts`: 数据类型定义。
+
+## ⚖️ 免责声明
+本应用生成的报告属于“实验性文学分析”，基于读者的互动行为模拟生成，旨在探讨人机互动下的情感反馈，不作为任何医学或心理诊断依据。

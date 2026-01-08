@@ -1,0 +1,22 @@
+
+# 拾光旧书 - 交互式叙事实验项目依赖
+# 建议运行环境：Node.js 18+ 或 现代浏览器环境
+
+# 核心开发框架
+react^19.2.3
+react-dom^19.2.3
+
+# UI 与 样式
+tailwindcss^3.x
+lucide-react^0.562.0
+
+# 智能分析引擎 (Gemini API)
+@google/genai^1.34.0
+
+# 数据可视化与导出
+echarts^5.4.3
+jspdf^2.5.1
+html2canvas^1.4.1
+
+# HTTP 与 交互支持
+esm.sh (作为 CDN 模块加载器)
